@@ -1,0 +1,51 @@
+x-application: &application
+  build: .
+  volumes:
+    - db-secret:/run/db-secret:ro
+
+services:
+  db-secret-init:
+    image: postgres:17-bookworm
+    user: '0:0'
+    entrypoint: ["/bin/sh", "/usr/local/bin/init-db-secret.sh", "/run/db-secret"]
+    volumes:
+      - ./docker/init-db-secret.sh:/usr/local/bin/init-db-secret.sh:ro
+      - db-secret:/run/db-secret
+
+  db:
+    image: postgres:17-bookworm
+    depends_on:
+      db-secret-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_DB: tasks
+      POSTGRES_PASSWORD_FILE: /run/db-secret/password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - db-secret:/run/db-secret:ro
+    healthcheck:
+      # The entrypoint's temporary initialization server has no TCP listener.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "tasks", "-d", "tasks"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    <<: *application
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["--migrate"]
+
+  api:
+    <<: *application
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - '127.0.0.1:8080:8080'
+
+volumes:
+  db-data:
+  db-secret:

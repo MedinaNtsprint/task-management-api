@@ -1,0 +1,13 @@
+.git
+**/bin
+**/obj
+**/artifacts
+**/.env
+**/.env.*
+**/.secrets
+**/secrets
+**/*.pem
+**/*.key
+**/*.pfx
+**/*.dump
+**/*.sql
