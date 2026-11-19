@@ -22,6 +22,8 @@ Use `docker compose down` to stop the stack while keeping the database and its p
 
 ## Local-only security assumptions
 
-Compose publishes the API on the host's loopback interface (`127.0.0.1:8080`). That mapping does not restrict the listener inside the container or apply when the image is run outside this Compose setup. PostgreSQL has no published host port. Its password is stored in a dedicated Docker volume; only the initializer has write access. It is not in the build, repository, or Compose environment settings. The volume is not encrypted, and administrators of the Docker engine can read it. Keep private material outside the build context.
+Compose publishes the API on the host's loopback interface (`127.0.0.1:8080`). That mapping does not restrict the listener inside the container or apply when the image is run outside this Compose setup. ASP.NET Core Host filtering allows only `localhost` and `127.0.0.1` by default, with or without a port. This checks the HTTP `Host` header and is not authentication.
+
+PostgreSQL has no published host port in Compose. Its password is stored in a dedicated Docker volume; only the initializer has write access. It is not in the build, repository, or Compose environment settings. The volume is not encrypted, and administrators of the Docker engine can read it. Keep private material outside the build context.
 
 For this single-user demo, the API and migration job share the bootstrap database role. Before a shared or production deployment, use a restricted runtime role, separate migration credentials, a managed secret store with per-service access, verified TLS, and reviewed image digests.
