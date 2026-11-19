@@ -49,6 +49,9 @@ public sealed class TaskApiFixture : IAsyncLifetime
         AllowAutoRedirect = false
     });
 
+    public WebApplicationFactory<Program> WithWebHostBuilder(Action<IWebHostBuilder> configure) =>
+        factory!.WithWebHostBuilder(configure);
+
     public async Task DisposeAsync()
     {
         try

@@ -24,6 +24,14 @@ Both filters are optional, exact, and case-sensitive. `status` accepts `pending`
 
 The response contains `items` in ascending ID order and a `nextAfterId` cursor. When the cursor is not `null`, keep the same filters and pass that positive ID as `afterId` to fetch tasks with higher IDs. A `null` cursor means there are no more matching tasks, including when `items` is empty.
 
+## HTTP errors and rate limit
+
+The API returns JSON Problem Details (`application/problem+json`) for HTTP errors when the request accepts JSON. Invalid input keeps field-level validation errors, unmatched paths return `404`, and unexpected application errors return a generic `500` without exception messages or stack traces.
+
+All matched task endpoints share a fixed window of 120 requests per minute per running API instance. Requests beyond that limit are rejected immediately, without queuing, with `429 Too Many Requests`. If the limiter supplies a retry time, `Retry-After` states the wait in whole seconds. To use a different positive limit for local development, set the non-secret `RateLimiting:RequestsPerMinute` setting in local application configuration (or `RateLimiting__RequestsPerMinute` in the API process environment) before starting the API.
+
+The limit is shared across callers, not keyed by client IP or forwarded headers, and is not coordinated across replicas. It is a local demo safeguard, not authentication or a production traffic policy.
+
 ## Database recovery
 
 - **PostgreSQL stopped after startup:** Run `docker compose start db`. The API may still be listening while PostgreSQL is down, but database-backed requests cannot succeed until it is ready again.
