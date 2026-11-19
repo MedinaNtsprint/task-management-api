@@ -16,6 +16,8 @@ A fresh database starts with three demo tasks: **Draft the release notes** (ID 1
 
 ## Try the API
 
+Open the [interactive Scalar reference](http://localhost:8080/scalar/v1) to explore and try the task endpoints, or download the [OpenAPI JSON](http://localhost:8080/openapi/v1.json). Both are served by the same local API from the normal Compose startup, with no extra port or configuration. Requests from the reference use the same origin (`http://localhost:8080`).
+
 Create a task, then list matching tasks with a page size of one:
 
 ```sh
@@ -57,7 +59,7 @@ dotnet restore TaskManagement.slnx --locked-mode
 dotnet test TaskManagement.slnx --no-restore
 ```
 
-The xUnit integration tests host the API in-process and provision, migrate, and dispose of temporary PostgreSQL containers using Testcontainers. They cover CRUD, validation, filters, pagination, Problem Details, and rate limiting. They do not require the Compose stack or an already-running API.
+The xUnit integration tests host the API in-process and provision, migrate, and dispose of temporary PostgreSQL containers using Testcontainers. They cover CRUD, validation, filters, pagination, Problem Details, rate limiting, and the OpenAPI document and Scalar page. They do not require the Compose stack or an already-running API.
 
 ## Design decisions
 

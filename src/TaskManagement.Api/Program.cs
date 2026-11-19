@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Scalar.AspNetCore;
 using TaskManagement.Api.Controllers;
 using TaskManagement.Api.Data;
 using TaskManagement.Api.Services;
@@ -28,6 +29,7 @@ if (migrate)
 }
 
 const string taskRateLimit = "tasks";
+builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails(options =>
 {
     options.CustomizeProblemDetails = context =>
@@ -70,6 +72,8 @@ app.MapControllers().Add(endpoint =>
         endpoint.Metadata.Add(new EnableRateLimitingAttribute(taskRateLimit));
     }
 });
+app.MapOpenApi();
+app.MapScalarApiReference(options => options.WithTitle("Task Management API").DisableDefaultFonts().DisableTelemetry());
 await app.RunAsync();
 
 public partial class Program { }
