@@ -18,7 +18,9 @@ A fresh database starts with three demo tasks: **Draft the release notes** (ID 1
 
 Open the [interactive Scalar reference](http://localhost:8080/scalar/v1) to explore and try the task endpoints, or download the [OpenAPI JSON](http://localhost:8080/openapi/v1.json). Both are served by the same local API from the normal Compose startup, with no extra port or configuration. Requests from the reference use the same origin (`http://localhost:8080`).
 
-Create a task, then list matching tasks with a page size of one:
+To send requests from VS Code, install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension, open [`requests/tasks.http`](requests/tasks.http), and click **Send Request** above any request. The file covers every endpoint, pagination, and the error responses; run it from the top so the create request saves the task ID that later requests use. JetBrains IDEs run `.http` files without an extension.
+
+Or create a task, then list matching tasks with a page size of one, using `curl`:
 
 ```sh
 curl -i -H 'Content-Type: application/json' \

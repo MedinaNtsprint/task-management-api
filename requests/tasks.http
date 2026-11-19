@@ -1,0 +1,137 @@
+### Task Management API requests
+###
+### Open this file in VS Code with the "REST Client" extension (humao.rest-client)
+### and click "Send Request" above any request. JetBrains IDEs run it natively.
+###
+### Start the API first: docker compose up --build
+### A fresh database has three demo tasks (IDs 1, 2, and 3).
+### Run the requests in order: the create request saves the new task ID for later ones.
+
+@baseUrl = http://localhost:8080
+
+### ---------------------------------------------------------------
+### Create
+### ---------------------------------------------------------------
+
+### Create a task -> 201 Created with a Location header
+# @name createTask
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Write a smoke test",
+  "description": "Check the local task API.",
+  "status": "pending",
+  "assignee": "Alex",
+  "dueDate": "2030-02-01"
+}
+
+### Remember the new task ID for the requests below
+@taskId = {{createTask.response.body.$.id}}
+
+### ---------------------------------------------------------------
+### Read
+### ---------------------------------------------------------------
+
+### List the first page (default page size is 20) -> 200 OK
+GET {{baseUrl}}/api/tasks
+
+### Filter by status and assignee, one task per page -> 200 OK
+# Both filters are exact, case-sensitive matches. Status is pending, inProgress, or done.
+# @name firstPage
+GET {{baseUrl}}/api/tasks?status=pending&assignee=Alex&pageSize=1
+
+### Next page: pass nextAfterId from the previous response as afterId with the same filters
+# A null nextAfterId means there are no more matching tasks.
+GET {{baseUrl}}/api/tasks?status=pending&assignee=Alex&pageSize=1&afterId={{firstPage.response.body.$.nextAfterId}}
+
+### Get the task created above -> 200 OK
+GET {{baseUrl}}/api/tasks/{{taskId}}
+
+### Get a demo task -> 200 OK
+GET {{baseUrl}}/api/tasks/1
+
+### ---------------------------------------------------------------
+### Update (PUT replaces the whole task, so send all five fields)
+### ---------------------------------------------------------------
+
+### Replace the task created above -> 200 OK
+PUT {{baseUrl}}/api/tasks/{{taskId}}
+Content-Type: application/json
+
+{
+  "title": "Write a smoke test",
+  "description": "Checked against the local task API.",
+  "status": "inProgress",
+  "assignee": "Morgan",
+  "dueDate": "2030-03-15"
+}
+
+### ---------------------------------------------------------------
+### Delete
+### ---------------------------------------------------------------
+
+### Delete the task created above -> 204 No Content
+DELETE {{baseUrl}}/api/tasks/{{taskId}}
+
+### Get the deleted task -> 404 Not Found
+GET {{baseUrl}}/api/tasks/{{taskId}}
+
+### ---------------------------------------------------------------
+### Error responses (application/problem+json)
+### ---------------------------------------------------------------
+
+### Missing required fields and an invalid status -> 400 Bad Request with field errors
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "   ",
+  "status": "blocked"
+}
+
+### Blank assignee -> 400 Bad Request
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Valid title",
+  "description": "Valid description.",
+  "status": "pending",
+  "assignee": " ",
+  "dueDate": "2030-02-01"
+}
+
+### Invalid date format -> 400 Bad Request
+POST {{baseUrl}}/api/tasks
+Content-Type: application/json
+
+{
+  "title": "Valid title",
+  "description": "Valid description.",
+  "status": "pending",
+  "assignee": "Alex",
+  "dueDate": "01/02/2030"
+}
+
+### Invalid filter status -> 400 Bad Request
+GET {{baseUrl}}/api/tasks?status=blocked
+
+### Page size out of range (1 to 100) -> 400 Bad Request
+GET {{baseUrl}}/api/tasks?pageSize=101
+
+### ID must be a positive integer -> 400 Bad Request
+GET {{baseUrl}}/api/tasks/0
+
+### Valid ID with no matching task -> 404 Not Found
+GET {{baseUrl}}/api/tasks/999999
+
+### ---------------------------------------------------------------
+### API documentation
+### ---------------------------------------------------------------
+
+### OpenAPI document -> 200 OK
+GET {{baseUrl}}/openapi/v1.json
+
+### Interactive Scalar reference (open http://localhost:8080/scalar/v1 in a browser)
+GET {{baseUrl}}/scalar/v1
