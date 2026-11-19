@@ -14,6 +14,16 @@ The first run pulls the public base images and restores the locked NuGet depende
 
 Use `docker compose down` to stop the stack while keeping the database and its password for the next run.
 
+## List tasks
+
+```sh
+curl 'http://localhost:8080/api/tasks?status=pending&assignee=Alex&pageSize=20'
+```
+
+Both filters are optional, exact, and case-sensitive. `status` accepts `pending`, `inProgress`, or `done`. `pageSize` defaults to 20 and accepts values from 1 to 100. Supply at most one value for each query parameter (`status`, `assignee`, `pageSize`, and `afterId`); repeated values return HTTP 400.
+
+The response contains `items` in ascending ID order and a `nextAfterId` cursor. When the cursor is not `null`, keep the same filters and pass that positive ID as `afterId` to fetch tasks with higher IDs. A `null` cursor means there are no more matching tasks, including when `items` is empty.
+
 ## Database recovery
 
 - **PostgreSQL stopped after startup:** Run `docker compose start db`. The API may still be listening while PostgreSQL is down, but database-backed requests cannot succeed until it is ready again.

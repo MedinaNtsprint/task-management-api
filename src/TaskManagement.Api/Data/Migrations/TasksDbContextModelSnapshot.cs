@@ -54,6 +54,10 @@ namespace TaskManagement.Api.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Assignee", "Id");
+
+                    b.HasIndex("Status", "Id");
+
                     b.ToTable("Tasks", null, t =>
                         {
                             t.HasCheckConstraint("CK_Tasks_Assignee_NotBlank", "\"Assignee\" ~ '[^[:space:]]'");

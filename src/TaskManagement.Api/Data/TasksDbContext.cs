@@ -23,6 +23,8 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
         task.Property(item => item.Title).IsRequired().HasMaxLength(120);
         task.Property(item => item.Description).IsRequired().HasMaxLength(2000);
         task.Property(item => item.Assignee).IsRequired().HasMaxLength(100);
+        task.HasIndex(item => new { item.Status, item.Id });
+        task.HasIndex(item => new { item.Assignee, item.Id });
 
         task.HasData(
             new WorkTask

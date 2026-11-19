@@ -14,6 +14,28 @@ internal sealed class TaskService(TasksDbContext database) : ITaskService
         return ToResponse(task);
     }
 
+    public async Task<TaskPageResponse> ListAsync(TaskListQuery query, CancellationToken cancellationToken)
+    {
+        var filtered = database.Tasks.AsNoTracking();
+        if (TaskStatusTokens.Parse(query.Status) is { } status)
+            filtered = filtered.Where(task => task.Status == status);
+        if (query.Assignee is { } assignee)
+            filtered = filtered.Where(task => task.Assignee == assignee);
+        if (query.AfterId is { } afterId)
+            filtered = filtered.Where(task => task.Id > afterId);
+
+        var items = await filtered.OrderBy(task => task.Id).Take(query.PageSize + 1)
+            .Select(task => new TaskResponse(task.Id, task.Title, task.Description,
+                TaskStatusTokens.Format(task.Status), task.Assignee, task.DueDate))
+            .ToListAsync(cancellationToken);
+
+        if (items.Count <= query.PageSize)
+            return new TaskPageResponse(items, null);
+
+        items.RemoveAt(query.PageSize);
+        return new TaskPageResponse(items, items[^1].Id);
+    }
+
     public async Task<Result<TaskResponse>> GetByIdAsync(int id, CancellationToken cancellationToken)
     {
         var task = await database.Tasks.AsNoTracking().SingleOrDefaultAsync(task => task.Id == id, cancellationToken);
