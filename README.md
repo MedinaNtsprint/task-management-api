@@ -85,4 +85,36 @@ The generated database password is not committed, built into the image, or passe
 
 ## AI assistance
 
-AI helped explore the plan and endpoint design, generate scaffolding, Compose configuration, EF Core migrations, and tests under explicit scopes, and assist with bounded reviews. The implementation kept the simple scoped service, ID cursor, and prepared Docker startup approach. Review and testing led to corrections for validation false positives, embedded NULs, and repeated query parameters. Implementation changes were tested and reviewed before each local work-unit commit.
+I used an AI coding assistant for planning, implementation, and review. I set the constraints and decided what stayed; the assistant proposed, wrote code, and checked it.
+
+**What I asked for**
+
+- An opinion on the brief, then a plan split into short tasks, each ending in its own commit.
+- My requirements: .NET 10, PostgreSQL with seed data, DTOs, controller → service → `Result<T>`, middleware and rate limiting, async I/O, English code, and a stack that starts with one command and keeps its secret out of source and image layers.
+- One task at a time: scaffold, schema and seed, Compose, CRUD, filters and pagination, errors and rate limiting, README, and finally OpenAPI with Scalar. Each task came with tests and a review.
+
+**What I accepted**
+
+- Validation in three layers: DTO annotations for format, the service for rules, and PostgreSQL constraints for integrity.
+- Keyset pagination: filter on `id > afterId`, fetch one extra row instead of counting, and index `(status, id)` and `(assignee, id)`. A SQL trace confirmed one parameterized query with no `COUNT` or `OFFSET`.
+- A generated database password in a dedicated volume, read from a file rather than an environment variable.
+- Scalar over the .NET 10 OpenAPI document as the only viewer, with its assets bundled so the page makes no third-party requests.
+
+**What I rejected or changed**
+
+- The assistant first advised SQLite, three tests, and no Docker to finish safely. I chose PostgreSQL and Docker because the reviewers will run the project, and I kept the full test suite.
+
+**What I corrected**
+
+Failing tests and independent reviews caught these before delivery. The HTTP fixes each started from a test that failed first:
+
+- Text containing a NUL character caused a PostgreSQL error and a `500`; it now returns `400`.
+- A `Host` header outside the allowlist was served; it is now rejected.
+- Repeated query parameters and numbers with a trailing NUL returned `200`; they now return `400`.
+- Rate limiting, generic `500` bodies, and Problem Details for unmatched routes were missing at first and were added with tests.
+- Scalar enabled telemetry by default; the security review flagged it, and I turned it off and asserted that in a test.
+- The test database image is pinned by digest and bound to loopback only, after a security review note.
+
+**How I verified it**
+
+The tests are integration tests against real PostgreSQL, not mocks. Some independent verification runs could not start the test containers, so I reran the exact commands myself. I treated passing review as evidence, not proof, and nothing was pushed until the clean-clone run passed.
